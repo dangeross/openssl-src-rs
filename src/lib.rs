@@ -359,6 +359,7 @@ impl Build {
             "x86_64-sun-solaris" => "solaris64-x86_64-gcc",
             "wasm32-unknown-emscripten" => "gcc",
             "wasm32-unknown-unknown" => "gcc",
+            "wasm32-wasmer-wasi" => "gcc",
             "wasm32-wasi" => "gcc",
             "aarch64-apple-ios" => "ios64-cross",
             "x86_64-apple-ios" => "iossimulator-xcrun",
@@ -498,12 +499,8 @@ impl Build {
                 configure.args([
                     // Termios isn't available whatsoever on WASM/WASI so we disable that
                     "no-ui-console",
-                    // WASI doesn't support UNIX sockets so we preemptively disable it
-                    "no-sock",
                     // WASI doesn't have a concept of syslog, so we disable it
                     "-DNO_SYSLOG",
-                    // WASI doesn't support (p)threads. Disabling preemptively.
-                    "no-threads",
                     // WASI/WASM aren't really friends with ASM, so we disable it as well.
                     "no-asm",
                     // Disables the AFALG engine (AFALG-ENGine)
@@ -524,13 +521,52 @@ impl Build {
                     // with -D_WASI_EMULATED_MMAN and link with -lwasi-emulated-mman
                     // The link argument is output in the `Artifacts::print_cargo_metadata` method
                     "-D_WASI_EMULATED_MMAN",
+                    // WASI doesn't have chmod right now, so don't try to use it.
+                    "-DNO_CHMOD",
+                ]);
+            }
+
+            if target == "wasm32-wasmer-wasi" {
+                // https://github.com/wasix-org/openssl/blob/master/NOTES-WASIX.md
+                configure.args([
+                    "-matomics", 
+                    "-mbulk-memory", 
+                    "-mmutable-globals", 
+                    "-pthread",
+                    "-mthread-model posix",
+                    "-ftls-model=local-exec", 
+                    "-fno-trapping-math",
+                    "no-apps",
+                    "-Wl,--shared-memory",
+                    "-Wl,--max-memory=4294967296",
+                    "-Wl,--import-memory", 
+                    "-Wl,--export-dynamic",
+                    "-Wl,--export=__heap_base",
+                    "-Wl,--export=__stack_pointer",
+                    "-Wl,--export=__data_end",
+                    "-Wl,--export=__wasm_init_tls",
+                    "-Wl,--export=__wasm_signal",
+                    "-Wl,--export=__tls_size",
+                    "-Wl,--export=__tls_align",
+                    "-Wl,--export=__tls_base", 
+                    "-DUSE_TIMEGM",
+                    "-DOPENSSL_NO_SECURE_MEMORY",
+                    "-DOPENSSL_NO_DGRAM",
+                    "-DOPENSSL_THREADS",
+                ]);
+            }
+
+            if target == "wasm32-wasi" {
+                configure.args([
+                    // WASI doesn't support UNIX sockets so we preemptively disable it
+                    "no-sock",
+                    // WASI doesn't support (p)threads. Disabling preemptively.
+                    "no-threads",
                     // WASI lacks process identifiers; to enable emulation of the `getpid` function using a
                     // placeholder value, which doesn't reflect the host PID of the program, compile with
                     // -D_WASI_EMULATED_GETPID and link with -lwasi-emulated-getpid
                     // The link argument is output in the `Artifacts::print_cargo_metadata` method
                     "-D_WASI_EMULATED_GETPID",
-                    // WASI doesn't have chmod right now, so don't try to use it.
-                    "-DNO_CHMOD",
                 ]);
             }
 
