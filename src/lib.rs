@@ -528,37 +528,19 @@ impl Build {
 
             if target == "wasm32-wasmer-wasi" {
                 // https://github.com/wasix-org/openssl/blob/master/NOTES-WASIX.md
-                configure.env(
-                    "CFLAGS",
-                    [
-                        "-matomics",
-                        "-mbulk-memory",
-                        "-mmutable-globals",
-                        "-pthread",
-                        "-mthread-model posix",
-                    ]
-                    .join(" "),
-                );
-                configure.env(
-                    "LDFLAGS",
-                    [
-                        "-Wl,--shared-memory",
-                        "-Wl,--max-memory=4294967296",
-                        "-Wl,--import-memory",
-                        "-Wl,--export-dynamic",
-                        "-Wl,--export=__heap_base",
-                        "-Wl,--export=__stack_pointer",
-                        "-Wl,--export=__data_end",
-                        "-Wl,--export=__wasm_init_tls",
-                        "-Wl,--export=__wasm_signal",
-                        "-Wl,--export=__tls_size",
-                        "-Wl,--export=__tls_align",
-                        "-Wl,--export=__tls_base",
-                    ]
-                    .join(" "),
-                );
-
                 configure.args([
+                    "-Wl,--shared-memory",
+                    "-Wl,--max-memory=4294967296",
+                    "-Wl,--import-memory",
+                    "-Wl,--export-dynamic",
+                    "-Wl,--export=__heap_base",
+                    "-Wl,--export=__stack_pointer",
+                    "-Wl,--export=__data_end",
+                    "-Wl,--export=__wasm_init_tls",
+                    "-Wl,--export=__wasm_signal",
+                    "-Wl,--export=__tls_size",
+                    "-Wl,--export=__tls_align",
+                    "-Wl,--export=__tls_base",
                     "-ftls-model=local-exec",
                     "-fno-trapping-math",
                     "no-apps",
