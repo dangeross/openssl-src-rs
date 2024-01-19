@@ -528,27 +528,40 @@ impl Build {
 
             if target == "wasm32-wasmer-wasi" {
                 // https://github.com/wasix-org/openssl/blob/master/NOTES-WASIX.md
+                configure.env(
+                    "CFLAGS",
+                    [
+                        "-matomics",
+                        "-mbulk-memory",
+                        "-mmutable-globals",
+                        "-pthread",
+                        "-mthread-model posix",
+                    ]
+                    .join(" "),
+                );
+                configure.env(
+                    "LDFLAGS",
+                    [
+                        "-Wl,--shared-memory",
+                        "-Wl,--max-memory=4294967296",
+                        "-Wl,--import-memory",
+                        "-Wl,--export-dynamic",
+                        "-Wl,--export=__heap_base",
+                        "-Wl,--export=__stack_pointer",
+                        "-Wl,--export=__data_end",
+                        "-Wl,--export=__wasm_init_tls",
+                        "-Wl,--export=__wasm_signal",
+                        "-Wl,--export=__tls_size",
+                        "-Wl,--export=__tls_align",
+                        "-Wl,--export=__tls_base",
+                    ]
+                    .join(" "),
+                );
+
                 configure.args([
-                    "-matomics", 
-                    "-mbulk-memory", 
-                    "-mmutable-globals", 
-                    "-pthread",
-                    "-mthread-model posix",
-                    "-ftls-model=local-exec", 
+                    "-ftls-model=local-exec",
                     "-fno-trapping-math",
                     "no-apps",
-                    "-Wl,--shared-memory",
-                    "-Wl,--max-memory=4294967296",
-                    "-Wl,--import-memory", 
-                    "-Wl,--export-dynamic",
-                    "-Wl,--export=__heap_base",
-                    "-Wl,--export=__stack_pointer",
-                    "-Wl,--export=__data_end",
-                    "-Wl,--export=__wasm_init_tls",
-                    "-Wl,--export=__wasm_signal",
-                    "-Wl,--export=__tls_size",
-                    "-Wl,--export=__tls_align",
-                    "-Wl,--export=__tls_base", 
                     "-DUSE_TIMEGM",
                     "-DOPENSSL_NO_SECURE_MEMORY",
                     "-DOPENSSL_NO_DGRAM",
@@ -677,7 +690,9 @@ fn cp_r(src: &Path, dst: &Path) {
             cp_r(&path, &dst);
         } else {
             let _ = fs::remove_file(&dst);
-            fs::copy(&path, &dst).unwrap();
+            fs::copy(&path, &dst)
+                .map_err(|e| format!("{:?}: {}", path, e))
+                .unwrap();
         }
     }
 }
