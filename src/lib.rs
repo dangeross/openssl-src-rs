@@ -722,11 +722,13 @@ impl Artifacts {
         if self.target.contains("windows") {
             println!("cargo:rustc-link-lib=user32");
             println!("cargo:rustc-link-lib=crypt32");
-        } else if self.target == "wasm32-wasi" {
+        } else if self.target.contains("wasi") {
+            if !self.target.contains("wasmer") {
+                println!("cargo:rustc-link-lib=wasi-emulated-getpid");
+            }
             println!("cargo:rustc-link-lib=wasi-emulated-signal");
             println!("cargo:rustc-link-lib=wasi-emulated-process-clocks");
             println!("cargo:rustc-link-lib=wasi-emulated-mman");
-            println!("cargo:rustc-link-lib=wasi-emulated-getpid");
         }
     }
 }
