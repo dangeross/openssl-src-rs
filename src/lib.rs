@@ -544,6 +544,7 @@ impl Build {
                     "-ftls-model=local-exec",
                     "-fno-trapping-math",
                     "no-apps",
+                    "no-sock",
                     "-DUSE_TIMEGM",
                     "-DOPENSSL_NO_SECURE_MEMORY",
                     "-DOPENSSL_NO_DGRAM",
