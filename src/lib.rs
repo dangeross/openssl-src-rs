@@ -527,6 +527,8 @@ impl Build {
             }
 
             if target == "wasm32-wasmer-wasi" {
+                configure.env("CFLAGS", "-matomics -mbulk-memory -mmutable-globals -pthread -mthread-model posix -ftls-model=local-exec -fno-trapping-math -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS");
+
                 // https://github.com/wasix-org/openssl/blob/master/NOTES-WASIX.md
                 configure.args([
                     "-Wl,--shared-memory",
