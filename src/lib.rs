@@ -527,8 +527,7 @@ impl Build {
             }
 
             if target == "wasm32-wasmer-wasi" {
-                configure.env("CFLAGS", "-matomics -mbulk-memory -mmutable-globals -pthread -mthread-model posix -ftls-model=local-exec -fno-trapping-math -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS");
-
+                let target_feature = env::var("CARGO_CFG_TARGET_FEATURE").unwrap_or_default();
                 // https://github.com/wasix-org/openssl/blob/master/NOTES-WASIX.md
                 configure.args([
                     "-Wl,--shared-memory",
@@ -550,8 +549,15 @@ impl Build {
                     "-DUSE_TIMEGM",
                     "-DOPENSSL_NO_SECURE_MEMORY",
                     "-DOPENSSL_NO_DGRAM",
-                    "-DOPENSSL_THREADS",
                 ]);
+
+                if target_feature.contains("atomics") {
+                    configure.env("CFLAGS", "-matomics -mbulk-memory -mmutable-globals -pthread -mthread-model posix -ftls-model=local-exec -fno-trapping-math -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS");
+                    configure.args(["-DOPENSSL_THREADS"]);
+                } else {
+                    configure.env("CFLAGS", "-mbulk-memory -mmutable-globals -ftls-model=local-exec -fno-trapping-math -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_GETPID");
+                    configure.args(["no-threads", "-D_WASI_EMULATED_GETPID"]);
+                }
             }
 
             if target == "wasm32-wasi" {
